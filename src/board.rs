@@ -1,4 +1,5 @@
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct Board {
 
     pub squares: [char; 32],
@@ -85,5 +86,26 @@ impl Board {
     // Check if the game is over
     pub fn is_game_over(&self) -> bool {
         self.red_pieces == 0 || self.black_pieces == 0 || self.get_valid_moves().is_empty()
+    }
+
+    // Calculate Winner
+    pub fn get_winner(&self) -> Option<Color> { // Checks for all 3 cases
+        if self.red_pieces == 0 {
+            Some(Color::Black)
+        } else if self.black_pieces == 0 {
+            Some(Color::Red)
+        } else if self.get_valid_moves().is_empty() {
+            Some(match self.turn {
+                Color::Red => Color::Black,
+                Color::Black => Color::Red,
+            })
+        } else {
+            None
+        }
+    }
+    #[allow(dead_code)]
+    pub fn get_valid_moves(&self) -> Vec<Color> {// Temp Function
+        // todo
+        Vec::new()
     }
 }
