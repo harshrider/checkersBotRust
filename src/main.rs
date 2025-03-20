@@ -1,3 +1,15 @@
+mod board;
+
+use std::io::{self, Write};
+use board::{Board, Color};
+
 fn main() {
-    println!("Hello, world!");
+    println!("American Checkers");
+    println!("Red (r/R) vs Black (b/B)");
+
+    let board = Board::new();
+    board.display();
+
+
+
 }
