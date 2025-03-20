@@ -1,4 +1,5 @@
 mod board;
+mod mv;
 
 use std::io::{self, Write};
 use board::{Board, Color};

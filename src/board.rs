@@ -1,3 +1,5 @@
+use crate::mv::Move;
+
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct Board {
@@ -121,10 +123,3 @@ impl Board {
     }
 }
 
-// Represents a move in the game
-#[derive(Debug, Clone)]
-pub struct Move {
-    pub from: usize,
-    pub to: usize,
-    pub captures: Vec<usize>, // Indices of captured pieces
-}
