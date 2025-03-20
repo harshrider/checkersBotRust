@@ -81,4 +81,9 @@ impl Board {
         println!("Turn: {:?}", self.turn);
         println!("Red pieces: {}, Black pieces: {}", self.red_pieces, self.black_pieces);
     }
+
+    // Check if the game is over
+    pub fn is_game_over(&self) -> bool {
+        self.red_pieces == 0 || self.black_pieces == 0 || self.get_valid_moves().is_empty()
+    }
 }
