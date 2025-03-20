@@ -41,6 +41,17 @@ impl Board {
         }
     }
 
+    pub fn index_to_coords(&self, index: usize) -> (usize, usize) {
+        let row = index / 4;
+        let col = if row % 2 == 0 {
+            index % 4 * 2 + 1
+        } else {
+            index % 4 * 2
+        };
+        (row, col)
+    }
+
+
     pub fn coords_to_index(&self, row: usize, col: usize) -> Option<usize> {
         if (row + col) % 2 == 0 {
             return None; // White squares
@@ -104,8 +115,16 @@ impl Board {
         }
     }
     #[allow(dead_code)]
-    pub fn get_valid_moves(&self) -> Vec<Color> {// Temp Function
+    pub fn get_valid_moves(&self) -> Vec<Move> {// Temp Function
         // todo
         Vec::new()
     }
+}
+
+// Represents a move in the game
+#[derive(Debug, Clone)]
+pub struct Move {
+    pub from: usize,
+    pub to: usize,
+    pub captures: Vec<usize>, // Indices of captured pieces
 }
