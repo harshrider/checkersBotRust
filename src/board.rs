@@ -20,15 +20,15 @@ pub enum Color {
 impl Board {
     // Create a new board with the initial setup
     pub fn new() -> Self {
-        let mut squares = ['O'; 32];
+        let mut squares = ['□'; 32];
 
         // Set up black pieces (top of board)
-        for i in 0..12 {
+        for i in 0..11 {
             squares[i] = 'b';
         }
 
         // Set up red pieces (bottom of board)
-        for i in 20..32 {
+        for i in 19..32 {
             squares[i] = 'r';
         }
 
@@ -57,28 +57,28 @@ impl Board {
     }
 
     pub fn display(&self) {
-        println!("  0 1 2 3 4 5 6 7");
-        println!("  ---------------");
+        println!("\tA\tB\tC\tD\tE\tF\tG\tH");
+        println!("\t_____\t_____\t_____\t_____\t_____\t_____\t_____\t_____");
 
         for row in 0..8 {
-            print!("{} |", row);
+            print!("{}|\t", row);
 
             for col in 0..8 {
                 let piece = if (row + col) % 2 == 1 {
                     if let Some(index) = self.coords_to_index(row, col) {
                         self.squares[index]
                     } else {
-                        'X'
+                        ' '
                     }
                 } else {
-                    '-'
+                    '■'
                 };
 
-                print!("{}|", piece);
+                print!("|{}|\t", piece);
             }
 
             println!();
-            println!("  ---------------");
+            //println!("\t_____\t_____\t_____\t_____\t_____\t_____\t_____\t_____");
         }
 
         println!("Turn: {:?}", self.turn);
