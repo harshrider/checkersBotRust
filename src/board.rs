@@ -22,12 +22,12 @@ impl Board {
     pub fn new() -> Self {
         let mut squares = ['□'; 32];
 
-        // Set up black pieces (top of board)
+        // black pieces
         for i in 0..11 {
             squares[i] = 'b';
         }
 
-        // Set up red pieces (bottom of board)
+        // red pieces
         for i in 19..32 {
             squares[i] = 'r';
         }
@@ -40,9 +40,7 @@ impl Board {
         }
     }
 
-    // Convert between 2D coordinates (row, col) and 1D index (0-31)
     pub fn coords_to_index(&self, row: usize, col: usize) -> Option<usize> {
-        // Check if the coordinates are valid for a black square
         if (row + col) % 2 == 0 {
             return None; // White squares
         }
@@ -78,7 +76,6 @@ impl Board {
             }
 
             println!();
-            //println!("\t_____\t_____\t_____\t_____\t_____\t_____\t_____\t_____");
         }
 
         println!("Turn: {:?}", self.turn);
