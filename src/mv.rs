@@ -46,6 +46,9 @@ impl Move {
         if parts.len() != 2 { // Base Case
             return None;
         }
+        if !pos.contains('-') && !pos.contains('x') {
+            return None;
+        }
 
 
         let from_notation = parts[0];
