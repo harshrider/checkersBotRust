@@ -50,10 +50,30 @@ pub fn is_valid_move(board: &Board, m: &Move) -> bool {
         if (from_row as i32 - to_row as i32).abs() != 2 {
             return false;
         }
+        let middle_row = (from_row + to_row) / 2;
+        let middle_col = (from_col + to_col) / 2;
+
+        if let Some(middle_index) = board.coords_to_index(middle_row, middle_col) {
+            let middle_piece = board.squares[middle_index];
+
+            match board.turn {
+                Color::Red => if middle_piece != 'b' && middle_piece != 'B' { return false; },
+                Color::Black => if middle_piece != 'r' && middle_piece != 'R' { return false; },
+            }
+
+            if piece == 'r' && from_row <= to_row {
+                return false;
+            }
+            if piece == 'b' && from_row >= to_row {
+                return false;
+            }
+        } else {
+            return false;
+        }
 
     }
 
 
 
-    true// Temp
+    true
 }
