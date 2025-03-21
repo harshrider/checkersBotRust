@@ -46,6 +46,14 @@ pub fn is_valid_move(board: &Board, m: &Move) -> bool {
     }
 
 
+    else {
+        if (from_row as i32 - to_row as i32).abs() != 2 {
+            return false;
+        }
 
-    false// Temp
+    }
+
+
+
+    true// Temp
 }
