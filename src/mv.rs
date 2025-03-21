@@ -11,6 +11,32 @@ pub struct Move {
 }
 
 
+impl Move {
+
+    pub fn new(from: usize, to: usize, captures: Vec<usize>) -> Self {
+        Move {
+            from,
+            to,
+            captures,
+        }
+    }
+
+    // Algebraic notation (e.g., "E3-F4" or "E3xG5") - to move x to capture
+    pub fn to_notation(&self, board: &Board) -> String {
+        let (from_row, from_col) = board.index_to_coords(self.from);
+        let (to_row, to_col) = board.index_to_coords(self.to);
+
+        let from_notation = format!("{}{}", (from_col as u8 + b'A') as char, from_row + 1);
+        let to_notation = format!("{}{}", (to_col as u8 + b'A') as char, to_row + 1);
+
+        if self.captures.is_empty() {
+            format!("{}-{}", from_notation, to_notation)
+        } else {
+            format!("{}x{}", from_notation, to_notation)
+        }
+    }
+}
+
 pub fn is_valid_move(board: &Board, m: &Move) -> bool {
     // Basic Move Validation
     if m.from >= 32 || m.to >= 32 {
