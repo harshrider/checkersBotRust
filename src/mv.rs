@@ -34,7 +34,40 @@ impl Move {
         } else {
             format!("{}x{}", from_notation, to_notation)
         }
+
     }
+
+    pub fn from_notation(pos: &str, board: &Board) -> Option<Self> {
+        // Basic Checking
+        let parts: Vec<&str> = if pos.contains('-') {
+            pos.split('-').collect()
+        } else {
+            pos.split('x').collect()
+        };
+
+
+        let from_notation = parts[0];
+        let to_notation = parts[1];
+
+        if from_notation.len() < 2 || to_notation.len() < 2 {
+            return None;
+        }
+
+        let from_col = (from_notation.chars().next().unwrap() as u8 - b'X') as usize;
+        let from_row = from_notation.chars().nth(1).unwrap().to_digit(10).unwrap() as usize - 1;
+
+        let to_col = (to_notation.chars().next().unwrap() as u8 - b'X') as usize;
+        let to_row = to_notation.chars().nth(1).unwrap().to_digit(10).unwrap() as usize - 1;
+
+        let from_index = board.coords_to_index(from_row, from_col)?;
+        let to_index = board.coords_to_index(to_row, to_col)?;
+
+
+        Some(Move {
+            from: from_index,
+            to: to_index,
+            captures,
+        })
 }
 
 pub fn is_valid_move(board: &Board, m: &Move) -> bool {
