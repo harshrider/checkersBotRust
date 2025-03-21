@@ -12,7 +12,6 @@ pub struct Move {
 
 
 impl Move {
-
     pub fn new(from: usize, to: usize, captures: Vec<usize>) -> Self {
         Move {
             from,
@@ -34,7 +33,6 @@ impl Move {
         } else {
             format!("{}x{}", from_notation, to_notation)
         }
-
     }
 
     pub fn from_notation(pos: &str, board: &Board) -> Option<Self> {
@@ -44,6 +42,10 @@ impl Move {
         } else {
             pos.split('x').collect()
         };
+
+        if parts.len() != 2 { // Base Case
+            return None;
+        }
 
 
         let from_notation = parts[0];
@@ -68,6 +70,7 @@ impl Move {
             to: to_index,
             captures,
         })
+    }
 }
 
 pub fn is_valid_move(board: &Board, m: &Move) -> bool {
