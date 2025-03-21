@@ -149,3 +149,22 @@ pub fn is_valid_move(board: &Board, m: &Move) -> bool {
 
     true
 }
+
+
+
+// Check if a piece should be promoted to a king should update as well
+pub fn promote(board: &Board, index: usize) -> bool {
+    let piece = board.squares[index];
+    let (row, _) = board.index_to_coords(index);
+
+    if piece == 'r' && row == 0 {
+        //TODO: Still needs to promote to 'R' & 'B'
+        return true;
+    }
+
+    if piece == 'b' && row == 7 {
+        return true;
+    }
+
+    false
+}
