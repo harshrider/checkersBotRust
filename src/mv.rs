@@ -67,6 +67,13 @@ impl Move {
         let from_index = board.coords_to_index(from_row, from_col)?;
         let to_index = board.coords_to_index(to_row, to_col)?;
 
+        // Implemnt this later as need to
+        let captures = if pos.contains('x') {
+            // TODO
+            Vec::new()
+        } else {
+            Vec::new()
+        };
 
         Some(Move {
             from: from_index,
