@@ -98,7 +98,7 @@ impl Board {
 
     // Check if the game is over
     pub fn is_game_over(&self) -> bool {
-        self.red_pieces == 0 || self.black_pieces == 0 || self.get_valid_moves().is_empty()
+        self.red_pieces == 0 || self.black_pieces == 0
     }
 
     // Calculate Winner

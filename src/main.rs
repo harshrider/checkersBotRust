@@ -8,7 +8,7 @@ fn main() {
     println!("American Checkers");
     println!("Red (r/R) vs Black (b/B) □ Are real squares and ■ are not");
 
-    let board = Board::new();
+    let mut board = Board::new();
 
     // Game loop
     loop {
