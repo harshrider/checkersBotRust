@@ -69,7 +69,6 @@ impl Move {
 
         // Implemnt this later as need to
         let captures = if pos.contains('x') {
-            // TODO
             Vec::new()
         } else {
             Vec::new()

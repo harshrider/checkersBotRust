@@ -121,5 +121,34 @@ impl Board {
         // todo
         Vec::new()
     }
+
+
+    // Execute a move on the board
+    pub fn make_move(&mut self, m: &crate::mv::Move) -> Result<(), &'static str> {
+        // Move the piece from source to destination
+        let piece = self.squares[m.from];
+        self.squares[m.from] = '□';
+        self.squares[m.to] = piece;
+
+        for &capture_index in &m.captures {
+            let captured_piece = self.squares[capture_index];
+            self.squares[capture_index] = '□';
+
+            // Update piece count
+            if captured_piece == 'r' || captured_piece == 'R' {
+                self.red_pieces -= 1;
+            } else if captured_piece == 'b' || captured_piece == 'B' {
+                self.black_pieces -= 1;
+            }
+        }
+
+        // End Turn
+        self.turn = match self.turn {
+            Color::Red => Color::Black,
+            Color::Black => Color::Red,
+        };
+
+        Ok(())
+    }
 }
 
