@@ -39,12 +39,21 @@ impl Board {
     }
 
     pub fn index_to_coords(&self, index: usize) -> (usize, usize) {
-        let row = index / 4;
-        let col = if row % 2 == 0 {
-            index % 4 * 2 + 1
+        let row_group = index / 8;
+        let pos_in_group = index % 8;
+
+        let row = if pos_in_group < 4 {
+            row_group * 2
         } else {
-            index % 4 * 2
+            row_group * 2 + 1
         };
+
+        let col = if row % 2 == 0 {
+            (pos_in_group % 4) * 2 + 1
+        } else {
+            (pos_in_group % 4) * 2
+        };
+
         (row, col)
     }
 
