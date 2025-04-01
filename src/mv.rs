@@ -34,51 +34,109 @@ impl Move {
     }
 
     pub fn from_notation(pos: &str, board: &Board) -> Option<Self> {
+        println!("Parsing : '{}'", pos);
+
         // Basic Checking
+        if !pos.contains('-') && !pos.contains('x') {
+            println!(" Missing type of move");
+            return None;
+        }
+
         let parts: Vec<&str> = if pos.contains('-') {
             pos.split('-').collect()
         } else {
             pos.split('x').collect()
         };
 
-        if parts.len() != 2 { // Base Case
-            return None;
-        }
-        if !pos.contains('-') && !pos.contains('x') {
-            return None;
-        }
+        println!("parts: {:?}", parts);
 
+        if parts.len() != 2 { // Base Case TODO: This needs to change as captures can have more parts
+            println!("Invalid number of parts: {}", parts.len());
+            return None;
+        }
 
         let from_notation = parts[0];
         let to_notation = parts[1];
 
+        println!("From: '{}', To: '{}'", from_notation, to_notation);
+
         if from_notation.len() < 2 || to_notation.len() < 2 {
+            println!("Notation parts too short");
             return None;
         }
 
-        // Fix: Change b'X' to b'A' for correct letter offset
-        let from_col = (from_notation.chars().next().unwrap() as u8 - b'A') as usize;
-        let from_row = from_notation.chars().nth(1).unwrap().to_digit(10).unwrap() as usize - 1;
+        // Parse source position
+        let from_char = from_notation.chars().next().unwrap();
+        let from_num_char = from_notation.chars().nth(1).unwrap();
 
-        let to_col = (to_notation.chars().next().unwrap() as u8 - b'A') as usize;
-        let to_row = to_notation.chars().nth(1).unwrap().to_digit(10).unwrap() as usize - 1;
+        println!("From char: '{}', From num: '{}'", from_char, from_num_char);
 
-        let from_index = board.coords_to_index(from_row, from_col)?;
-        let to_index = board.coords_to_index(to_row, to_col)?;
+        if !from_char.is_ascii_alphabetic() || !from_num_char.is_ascii_digit() {
+            return None;
+        }
 
+        // Parse destination position
+        let to_char = to_notation.chars().next().unwrap();
+        let to_num_char = to_notation.chars().nth(1).unwrap();
+
+        println!("To char: '{}', To num: '{}'", to_char, to_num_char);
+
+        if !to_char.is_ascii_alphabetic() || !to_num_char.is_ascii_digit() {
+            println!("Invalid to notation format");
+            return None;
+        }
+
+        // Convert to uppercase to handle both upper and lowercase input
+        let from_col = (from_char.to_ascii_uppercase() as u8 - b'A') as usize;
+        let from_row = from_num_char.to_digit(10).unwrap() as usize - 1;
+
+        let to_col = (to_char.to_ascii_uppercase() as u8 - b'A') as usize;
+        let to_row = to_num_char.to_digit(10).unwrap() as usize - 1;
+
+        println!("From ({}, {}), To ({}, {})", from_row, from_col, to_row, to_col);
+
+        // Check if coordinates are within bounds
+        if from_row >= 8 || from_col >= 8 || to_row >= 8 || to_col >= 8 {
+            println!("Out of bounds");
+            return None;
+        }
+
+        // Convert to board indices
+        let from_index_opt = board.coords_to_index(from_row, from_col);
+        let to_index_opt = board.coords_to_index(to_row, to_col);
+
+        println!("From index option: {:?}, To index option: {:?}", from_index_opt, to_index_opt);
+
+        if from_index_opt.is_none() || to_index_opt.is_none() {
+            println!("Invalid board index conversion");
+            return None;
+        }
+
+        let from_index = from_index_opt.unwrap();
+        let to_index = to_index_opt.unwrap();
+
+        println!("From index: {}, To index: {}", from_index, to_index);
+
+        // Implement capture detection
         let captures = if pos.contains('x') {
             // Calculate the middle position for a capture
             let middle_row = (from_row + to_row) / 2;
             let middle_col = (from_col + to_col) / 2;
 
+            println!("Middle coords: ({}, {})", middle_row, middle_col);
+
             if let Some(middle_index) = board.coords_to_index(middle_row, middle_col) {
+                println!("Middle index: {}, Piece: '{}'", middle_index, board.squares[middle_index]);
                 vec![middle_index]
             } else {
+                println!(" No valid middle index for capture");
                 Vec::new()
             }
         } else {
             Vec::new()
         };
+
+        println!(" Final move - From: {}, To: {}, Captures: {:?}", from_index, to_index, captures);
 
         Some(Move {
             from: from_index,

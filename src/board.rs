@@ -49,11 +49,27 @@ impl Board {
     }
 
     pub fn coords_to_index(&self, row: usize, col: usize) -> Option<usize> {
-        if (row + col) % 2 == 0 {
-            return None; // White squares
+        // Bounds check
+        if row >= 8 || col >= 8 {
+            return None;
         }
 
-        let index = row * 4 + col / 2 - if row % 2 == 0 { 0 } else { 1 };
+        // Only dark squares are valid in checkers
+        if (row + col) % 2 == 0 {
+            return None; // Light squares are not used
+        }
+
+        // Calculate index in the 1D array
+        // Each row has 4 valid squares
+        // Even rows have pieces at odd columns (B0, D0, F0, H0)
+        // Odd rows have pieces at even columns (A1, C1, E1, G1)
+        let index = if row % 2 == 0 {
+            // Even row (0, 2, 4, 6) - valid squares are at odd columns
+            (row / 2) * 8 + (col / 2)
+        } else {
+            // Odd row (1, 3, 5, 7) - valid squares are at even columns
+            (row / 2) * 8 + 4 + (col / 2)
+        };
 
         if index < 32 {
             Some(index)
@@ -67,7 +83,7 @@ impl Board {
         println!("\t_____\t_____\t_____\t_____\t_____\t_____\t_____\t_____");
 
         for row in 0..8 {
-            print!("{}|\t", row);
+            print!("{}|\t", row+1);
 
             for col in 0..8 {
                 let piece = if (row + col) % 2 == 1 {
