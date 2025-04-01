@@ -1,10 +1,13 @@
 use crate::board::{Board, Color};
+use std::iter::Iterator;
 
+// Represents a move in the game
 #[derive(Debug, Clone)]
 pub struct Move {
     pub from: usize,
     pub to: usize,
     pub captures: Vec<usize>,// Can be multiple capture moves
+    pub path: Vec<usize>,    // Sequence of positions for multi-jumps (including from and to)
 }
 
 impl Move {
@@ -13,18 +16,43 @@ impl Move {
             from,
             to,
             captures,
+            path: vec![from, to],
         }
     }
 
-    // "E3-F4" or "B3-D5-F3" capture)
+    // Create a move with specified path for multi-jumps
+    pub fn with_path(from: usize, to: usize, captures: Vec<usize>, path: Vec<usize>) -> Self {
+        Move {
+            from,
+            to,
+            captures,
+            path,
+        }
+    }
+
+    // Algebraic notation (e.g., "E3-F4" or "B3-D5-F3" for multi-capture)
     pub fn to_notation(&self, board: &Board) -> String {
-        let (from_row, from_col) = board.index_to_coords(self.from);
-        let (to_row, to_col) = board.index_to_coords(self.to);
+        if self.path.len() > 2 {
+            // Functional approach for multi-jump notation
+            self.path.iter()
+                .enumerate()
+                .map(|(i, &position)| {
+                    let (row, col) = board.index_to_coords(position);
+                    let notation = format!("{}{}", (col as u8 + b'A') as char, row + 1);
+                    if i > 0 { format!("-{}", notation) } else { notation }
+                })
+                .collect::<String>()
+        } else {
+            // Simple move
+            let (from_row, from_col) = board.index_to_coords(self.from);
+            let (to_row, to_col) = board.index_to_coords(self.to);
 
-        let from_notation = format!("{}{}", (from_col as u8 + b'A') as char, from_row + 1);
-        let to_notation = format!("{}{}", (to_col as u8 + b'A') as char, to_row + 1);
-
-        format!("{}-{}", from_notation, to_notation)
+            format!(
+                "{}{}-{}{}",
+                (from_col as u8 + b'A') as char, from_row + 1,
+                (to_col as u8 + b'A') as char, to_row + 1
+            )
+        }
     }
 
     pub fn from_notation(pos: &str, board: &Board) -> Option<Self> {
@@ -34,153 +62,129 @@ impl Move {
         println!("parts: {:?}", parts);
 
         if parts.len() < 2 {
-            println!("Invalid format: Needs more than 1");
+            println!("Invalid format: Need at least a source and destination");
             return None;
         }
 
-        let from_notation = parts[0];
-        let to_notation = parts[parts.len() - 1];
-
-        println!("From: '{}', To: '{}'", from_notation, to_notation);
-
-        if from_notation.len() < 2 || to_notation.len() < 2 {
-            println!("Notation parts too short");
-            return None;
-        }
-
-        // Parse source position
-        let from_char = from_notation.chars().next().unwrap();
-        let from_num_char = from_notation.chars().nth(1).unwrap();
-
-        println!("From char: '{}', From num: '{}'", from_char, from_num_char);
-
-        if !from_char.is_ascii_alphabetic() || !from_num_char.is_ascii_digit() {
-            return None;
-        }
-
-        // Parse destination position
-        let to_char = to_notation.chars().next().unwrap();
-        let to_num_char = to_notation.chars().nth(1).unwrap();
-
-        println!("To char: '{}', To num: '{}'", to_char, to_num_char);
-
-        if !to_char.is_ascii_alphabetic() || !to_num_char.is_ascii_digit() {
-            println!("Invalid to notation format");
-            return None;
-        }
-
-        // Convert to uppercase to handle both upper and lowercase input
-        let from_col = (from_char.to_ascii_uppercase() as u8 - b'A') as usize;
-        let from_row = from_num_char.to_digit(10).unwrap() as usize - 1;
-
-        let to_col = (to_char.to_ascii_uppercase() as u8 - b'A') as usize;
-        let to_row = to_num_char.to_digit(10).unwrap() as usize - 1;
-
-        println!("From ({}, {}), To ({}, {})", from_row, from_col, to_row, to_col);
-
-        // Check if coordinates are within bounds
-        if from_row >= 8 || from_col >= 8 || to_row >= 8 || to_col >= 8 {
-            println!("Out of bounds");
-            return None;
-        }
-
-        // Convert to board indices
-        let from_index_opt = board.coords_to_index(from_row, from_col);
-        let to_index_opt = board.coords_to_index(to_row, to_col);
-
-        println!("From index option: {:?}, To index option: {:?}", from_index_opt, to_index_opt);
-
-        if from_index_opt.is_none() || to_index_opt.is_none() {
-            println!("Invalid board index conversion");
-            return None;
-        }
-
-        let from_index = from_index_opt.unwrap();
-        let to_index = to_index_opt.unwrap();
-
-        println!("From index: {}, To index: {}", from_index, to_index);
-
-        // Determine if this is a capture move based on distance
-        let (from_row, from_col) = board.index_to_coords(from_index);
-        let (to_row, to_col) = board.index_to_coords(to_index);
-
-        let row_diff = (from_row as i32 - to_row as i32).abs();
-        let col_diff = (from_col as i32 - to_col as i32).abs();
-
-        let mut captures = Vec::new();
-
-        // For captures (jumps of 2 or more spaces)
-        if row_diff >= 2 && col_diff >= 2 {
-            // If we have multiple parts, parse the intermediate jumps
-            if parts.len() > 2 {
-                // Track current position for multi-capture
-                let mut current_row = from_row;
-                let mut current_col = from_col;
-
-                // Process each jump
-                for i in 1..parts.len() {
-                    let jump_notation = parts[i];
-                    if jump_notation.len() < 2 {
-                        println!("Invalid jump notation");
-                        return None;
-                    }
-
-                    let jump_char = jump_notation.chars().next().unwrap();
-                    let jump_num_char = jump_notation.chars().nth(1).unwrap();
-
-                    if !jump_char.is_ascii_alphabetic() || !jump_num_char.is_ascii_digit() {
-                        println!("Invalid jump format");
-                        return None;
-                    }
-
-                    let jump_col = (jump_char.to_ascii_uppercase() as u8 - b'A') as usize;
-                    let jump_row = jump_num_char.to_digit(10).unwrap() as usize - 1;
-
-                    // Calculate and add the captured piece for this jump
-                    let middle_row = (current_row + jump_row) / 2;
-                    let middle_col = (current_col + jump_col) / 2;
-
-                    if let Some(middle_index) = board.coords_to_index(middle_row, middle_col) {
-                        println!("Capture at: ({}, {}) -> index {}", middle_row, middle_col, middle_index);
-                        captures.push(middle_index);
-                    } else {
-                        println!("Invalid middle position for capture");
-                        return None;
-                    }
-
-                    // Update current position for next jump
-                    current_row = jump_row;
-                    current_col = jump_col;
-                }
-            } else {
-                // Simple single capture
-                let middle_row = (from_row + to_row) / 2;
-                let middle_col = (from_col + to_col) / 2;
-
-                if let Some(middle_index) = board.coords_to_index(middle_row, middle_col) {
-                    println!("Middle index: {}, Piece: '{}'", middle_index, board.squares[middle_index]);
-                    captures.push(middle_index);
-                } else {
-                    println!("No valid middle index for capture");
+        // Convert all positions in the path to board indices using map
+        let positions_result: Option<Vec<((usize, usize), usize)>> = parts.iter()
+            .map(|&notation| {
+                // Validate and parse a single notation like "E3"
+                if notation.len() < 2 {
+                    println!("Notation part too short: {}", notation);
                     return None;
                 }
-            }
-        }
 
-        println!("Final move - From: {}, To: {}, Captures: {:?}", from_index, to_index, captures);
+                let chars: Vec<char> = notation.chars().collect();
+                let col_char = chars[0];
+                let row_char = chars[1];
+
+                if !col_char.is_ascii_alphabetic() || !row_char.is_ascii_digit() {
+                    println!("Invalid format in position: {}", notation);
+                    return None;
+                }
+
+                let col = (col_char.to_ascii_uppercase() as u8 - b'A') as usize;
+                let row = row_char.to_digit(10).map(|d| d as usize - 1)?;
+
+                println!("Position: ({}, {})", row, col);
+
+                if row >= 8 || col >= 8 {
+                    println!("Position out of bounds: {}", notation);
+                    return None;
+                }
+
+                // Get board index from coordinates
+                let index = board.coords_to_index(row, col)?;
+
+                Some(((row, col), index))
+            })
+            .collect();
+
+        // Early return if any position parsing failed
+        let positions = match positions_result {
+            Some(p) => p,
+            None => return None,
+        };
+
+        // Extract indices for path
+        let indices: Vec<usize> = positions.iter().map(|&(_, index)| index).collect();
+
+        // First position is the start, last is the end
+        let from_index = indices[0];
+        let to_index = indices[indices.len() - 1];
+
+        // Calculate captures for multi-jumps
+        let captures = if indices.len() > 2 {
+            // Process consecutive position pairs to find captures
+            positions.windows(2)
+                .filter_map(|window| {
+                    let ((start_row, start_col), _) = window[0];
+                    let ((end_row, end_col), _) = window[1];
+
+                    // Calculate the middle position (captured piece)
+                    let middle_row = (start_row + end_row) / 2;
+                    let middle_col = (start_col + end_col) / 2;
+
+                    // Check if it's a valid capture (diagonal and distance of 2)
+                    let row_diff = (start_row as i32 - end_row as i32).abs();
+                    let col_diff = (start_col as i32 - end_col as i32).abs();
+
+                    if row_diff != 2 || col_diff != 2 {
+                        println!("Invalid jump distance between positions");
+                        return None;
+                    }
+
+                    let middle_index = board.coords_to_index(middle_row, middle_col)?;
+                    println!("Capture at: ({}, {}) -> index {}", middle_row, middle_col, middle_index);
+
+                    Some(middle_index)
+                })
+                .collect()
+        } else {
+            // For simple jumps, check if it's a capture based on distance
+            let ((start_row, start_col), _) = positions[0];
+            let ((end_row, end_col), _) = positions[1];
+
+            let row_diff = (start_row as i32 - end_row as i32).abs();
+            let col_diff = (start_col as i32 - end_col as i32).abs();
+
+            // If the distance is 2, it's a capture
+            if row_diff == 2 && col_diff == 2 {
+                let middle_row = (start_row + end_row) / 2;
+                let middle_col = (start_col + end_col) / 2;
+
+                board.coords_to_index(middle_row, middle_col)
+                    .map(|middle_index| {
+                        println!("Middle index: {}, Piece: '{}'", middle_index, board.squares[middle_index]);
+                        vec![middle_index]
+                    })
+                    .unwrap_or_else(|| {
+                        println!("No valid middle index for capture");
+                        vec![]
+                    })
+            } else {
+                vec![]
+            }
+        };
+
+        println!("Final move - From: {}, To: {}, Path: {:?}, Captures: {:?}",
+                 from_index, to_index, indices, captures);
 
         Some(Move {
             from: from_index,
             to: to_index,
             captures,
+            path: indices,
         })
     }
 }
 
 pub fn is_valid_move(board: &Board, m: &Move) -> bool {
-    println!("Validating move: From {} to {}, Captures: {:?}", m.from, m.to, m.captures);
+    println!("Validating move: From {} to {}, Path: {:?}, Captures: {:?}",
+             m.from, m.to, m.path, m.captures);
 
-    // Basic Move Validation
+    // Basic validation checks
     if m.from >= 32 || m.to >= 32 {
         println!("Invalid indices");
         return false;
@@ -189,16 +193,16 @@ pub fn is_valid_move(board: &Board, m: &Move) -> bool {
     let piece = board.squares[m.from];
     println!("Piece at source: '{}'", piece);
 
-    // Check if piece belongs to current player
-    match board.turn {
-        Color::Red => if piece != 'r' && piece != 'R' {
-            println!("Not red's piece");
-            return false;
-        },
-        Color::Black => if piece != 'b' && piece != 'B' {
-            println!("Not black's piece");
-            return false;
-        },
+    // Check if piece belongs to current player using pattern matching
+    let piece_belongs_to_current_player = match (board.turn, piece) {
+        (Color::Red, 'r') | (Color::Red, 'R') => true,
+        (Color::Black, 'b') | (Color::Black, 'B') => true,
+        _ => false
+    };
+
+    if !piece_belongs_to_current_player {
+        println!("Piece doesn't belong to current player");
+        return false;
     }
 
     // Check if destination is empty
@@ -207,6 +211,91 @@ pub fn is_valid_move(board: &Board, m: &Move) -> bool {
         return false;
     }
 
+    let is_king = piece == 'R' || piece == 'B';
+
+    // For multi-jumps, validate each segment of the path
+    if m.path.len() > 2 {
+        println!("Validating multi-jump path with {} segments", m.path.len() - 1);
+
+        // Each captured piece must belong to the opponent - use all() to check
+        let all_captures_valid = m.captures.iter().all(|&capture_index| {
+            let captured_piece = board.squares[capture_index];
+            println!("Checking captured piece at index {}: '{}'", capture_index, captured_piece);
+
+            let is_valid_capture = match board.turn {
+                Color::Red => captured_piece == 'b' || captured_piece == 'B',
+                Color::Black => captured_piece == 'r' || captured_piece == 'R',
+            };
+
+            if !is_valid_capture {
+                println!("Invalid capture: not an opponent's piece");
+            }
+
+            is_valid_capture
+        });
+
+        if !all_captures_valid {
+            return false;
+        }
+
+        // Check each segment of the path using windows() and all()
+        let all_segments_valid = m.path.windows(2).enumerate().all(|(i, window)| {
+            let from_pos = window[0];
+            let to_pos = window[1];
+
+            let (from_row, from_col) = board.index_to_coords(from_pos);
+            let (to_row, to_col) = board.index_to_coords(to_pos);
+
+            let row_diff = (from_row as i32 - to_row as i32).abs();
+            let col_diff = (from_col as i32 - to_col as i32).abs();
+
+            println!("Checking jump segment {} -> {}: row diff = {}, col diff = {}",
+                     from_pos, to_pos, row_diff, col_diff);
+
+            // Each jump must be diagonal
+            if row_diff != col_diff {
+                println!("Jump segment not diagonal");
+                return false;
+            }
+
+            // Each jump must be 2 squares (capture)
+            if row_diff != 2 {
+                println!("Jump segment distance not 2");
+                return false;
+            }
+
+            // For regular pieces, check direction
+            if !is_king {
+                match piece {
+                    'r' if from_row <= to_row => {
+                        println!("Red pawn can only move/capture up");
+                        return false;
+                    },
+                    'b' if from_row >= to_row => {
+                        println!("Black pawn can only move/capture down");
+                        return false;
+                    },
+                    _ => {}
+                }
+            }
+
+            true
+        });
+
+        if !all_segments_valid {
+            return false;
+        }
+
+        // The number of captures = jumps
+        if m.captures.len() != m.path.len() - 1 {
+            println!("Capture count doesn't match jump count");
+            return false;
+        }
+
+        return true;
+    }
+
+    // Simple move (non-multi-jump)
     let (from_row, from_col) = board.index_to_coords(m.from);
     let (to_row, to_col) = board.index_to_coords(m.to);
 
@@ -223,9 +312,7 @@ pub fn is_valid_move(board: &Board, m: &Move) -> bool {
         return false;
     }
 
-    let is_king = piece == 'R' || piece == 'B';
-
-    // Regular move (no capture)
+    // Regular move
     if m.captures.is_empty() {
         // Check if it's only one square
         if row_diff != 1 {
@@ -233,52 +320,59 @@ pub fn is_valid_move(board: &Board, m: &Move) -> bool {
             return false;
         }
 
-        // Direction check for pawns (not kings)
+        // Direction check for pawns with pattern matching
         if !is_king {
-            if piece == 'r' && from_row <= to_row {
-                println!("Red pawn can only move up");
-                return false; // Red pawns can only move up
-            }
-            if piece == 'b' && from_row >= to_row {
-                println!("Black pawn can only move down");
-                return false; // Black pawns can only move down
+            match (piece, from_row.cmp(&to_row)) {
+                ('r', std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => {
+                    println!("Red pawn can only move up");
+                    return false;
+                },
+                ('b', std::cmp::Ordering::Greater | std::cmp::Ordering::Equal) => {
+                    println!("Black pawn can only move down");
+                    return false;
+                },
+                _ => {}
             }
         }
     }
-    // Capture move
+    // Capture move (single jump)
     else {
-        // Validate each captured piece
-        for &capture_index in &m.captures {
-            let captured_piece = board.squares[capture_index];
-            println!("Validating capture at index {}, piece: '{}'", capture_index, captured_piece);
-
-            // Check if it's an opponent's piece
-            let is_valid_capture = match board.turn {
-                Color::Red => captured_piece == 'b' || captured_piece == 'B',
-                Color::Black => captured_piece == 'r' || captured_piece == 'R',
-            };
-
-            if !is_valid_capture {
-                println!("Not a valid piece to capture");
-                return false;
-            }
-        }
-
-        // For simple captures, check the jump distance
-        if m.captures.len() == 1 && row_diff != 2 {
+        if row_diff != 2 {
             println!("Capture jump distance must be 2");
             return false;
         }
 
-        // Direction check for pawns (not kings)
-        if !is_king {
-            if piece == 'r' && from_row <= to_row {
-                println!("Red pawn can only capture up");
-                return false;
+        // Use all() to check all captures are valid
+        let all_captures_valid = m.captures.iter().all(|&capture_index| {
+            let captured_piece = board.squares[capture_index];
+            println!("Validating capture at index {}, piece: '{}'", capture_index, captured_piece);
+
+            match (board.turn, captured_piece) {
+                (Color::Red, 'b') | (Color::Red, 'B') => true,
+                (Color::Black, 'r') | (Color::Black, 'R') => true,
+                _ => {
+                    println!("Not a valid piece to capture");
+                    false
+                }
             }
-            if piece == 'b' && from_row >= to_row {
-                println!("Black pawn can only capture down");
-                return false;
+        });
+
+        if !all_captures_valid {
+            return false;
+        }
+
+        // Direction check for pawns with pattern matching
+        if !is_king {
+            match (piece, from_row.cmp(&to_row)) {
+                ('r', std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => {
+                    println!("Red pawn can only capture up");
+                    return false;
+                },
+                ('b', std::cmp::Ordering::Greater | std::cmp::Ordering::Equal) => {
+                    println!("Black pawn can only capture down");
+                    return false;
+                },
+                _ => {}
             }
         }
     }
@@ -287,20 +381,17 @@ pub fn is_valid_move(board: &Board, m: &Move) -> bool {
     true
 }
 
-// Check if a piece should be promoted to a king
 pub fn promote(board: &Board, index: usize) -> bool {
-    let piece = board.squares[index];
-    let (row, _) = board.index_to_coords(index);
-
-    if piece == 'r' && row == 0 {
-        println!("Promoting red piece to king");
-        return true;
+    // Use pattern matching to check for promotion conditions
+    match (board.squares[index], board.index_to_coords(index)) {
+        ('r', (0, _)) => {
+            println!("Promoting red piece to king");
+            true
+        },
+        ('b', (7, _)) => {
+            println!("Promoting black piece to king");
+            true
+        },
+        _ => false
     }
-
-    if piece == 'b' && row == 7 {
-        println!("Promoting black piece to king");
-        return true;
-    }
-
-    false
 }
