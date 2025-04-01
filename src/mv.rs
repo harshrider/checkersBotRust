@@ -1,5 +1,3 @@
-
-
 use crate::board::{Board, Color};
 
 // Represents a move in the game
@@ -58,18 +56,26 @@ impl Move {
             return None;
         }
 
-        let from_col = (from_notation.chars().next().unwrap() as u8 - b'X') as usize;
+        // Fix: Change b'X' to b'A' for correct letter offset
+        let from_col = (from_notation.chars().next().unwrap() as u8 - b'A') as usize;
         let from_row = from_notation.chars().nth(1).unwrap().to_digit(10).unwrap() as usize - 1;
 
-        let to_col = (to_notation.chars().next().unwrap() as u8 - b'X') as usize;
+        let to_col = (to_notation.chars().next().unwrap() as u8 - b'A') as usize;
         let to_row = to_notation.chars().nth(1).unwrap().to_digit(10).unwrap() as usize - 1;
 
         let from_index = board.coords_to_index(from_row, from_col)?;
         let to_index = board.coords_to_index(to_row, to_col)?;
 
-        // Implemnt this later as need to
         let captures = if pos.contains('x') {
-            Vec::new()
+            // Calculate the middle position for a capture
+            let middle_row = (from_row + to_row) / 2;
+            let middle_col = (from_col + to_col) / 2;
+
+            if let Some(middle_index) = board.coords_to_index(middle_row, middle_col) {
+                vec![middle_index]
+            } else {
+                Vec::new()
+            }
         } else {
             Vec::new()
         };
@@ -114,9 +120,10 @@ pub fn is_valid_move(board: &Board, m: &Move) -> bool {
         if piece == 'b' && from_row >= to_row {
             return false; // Black pawns can only move down
         }
+
+        // Kings can move in any direction, so no direction check needed for 'R' and 'B'
     }
-
-
+    // Capture move
     else {
         if (from_row as i32 - to_row as i32).abs() != 2 {
             return false;
@@ -138,26 +145,24 @@ pub fn is_valid_move(board: &Board, m: &Move) -> bool {
             if piece == 'b' && from_row >= to_row {
                 return false;
             }
+
+            if !m.captures.contains(&middle_index) {
+                return false;
+            }
         } else {
             return false;
         }
-
     }
-
-
 
     true
 }
 
-
-
-// Check if a piece should be promoted to a king should update as well
+// Check if a piece should be promoted to a king
 pub fn promote(board: &Board, index: usize) -> bool {
     let piece = board.squares[index];
     let (row, _) = board.index_to_coords(index);
 
     if piece == 'r' && row == 0 {
-        //TODO: Still needs to promote to 'R' & 'B'
         return true;
     }
 

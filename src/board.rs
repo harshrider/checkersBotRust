@@ -3,7 +3,6 @@ use crate::mv::Move;
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct Board {
-
     pub squares: [char; 32],
     pub turn: Color,
     pub red_pieces: u8,
@@ -15,10 +14,6 @@ pub enum Color {
     Red,
     Black,
 }
-
-
-
-
 
 impl Board {
     // Create a new board with the initial setup
@@ -52,7 +47,6 @@ impl Board {
         };
         (row, col)
     }
-
 
     pub fn coords_to_index(&self, row: usize, col: usize) -> Option<usize> {
         if (row + col) % 2 == 0 {
@@ -96,32 +90,27 @@ impl Board {
         println!("Red pieces: {}, Black pieces: {}", self.red_pieces, self.black_pieces);
     }
 
-    // Check if the game is over
+    // Check if the game is over - for now, only when all pieces are captured
     pub fn is_game_over(&self) -> bool {
         self.red_pieces == 0 || self.black_pieces == 0
     }
 
-    // Calculate Winner
-    pub fn get_winner(&self) -> Option<Color> { // Checks for all 3 cases
+    // Calculate Winner - simplified version
+    pub fn get_winner(&self) -> Option<Color> {
         if self.red_pieces == 0 {
             Some(Color::Black)
         } else if self.black_pieces == 0 {
             Some(Color::Red)
-        } else if self.get_valid_moves().is_empty() {
-            Some(match self.turn {
-                Color::Red => Color::Black,
-                Color::Black => Color::Red,
-            })
         } else {
             None
         }
     }
+
     #[allow(dead_code)]
-    pub fn get_valid_moves(&self) -> Vec<Move> {// Temp Function
-        // todo
+    pub fn get_valid_moves(&self) -> Vec<Move> {
+        // This will be implemented in a separate file later
         Vec::new()
     }
-
 
     // Execute a move on the board
     pub fn make_move(&mut self, m: &crate::mv::Move) -> Result<(), &'static str> {
@@ -151,4 +140,3 @@ impl Board {
         Ok(())
     }
 }
-
