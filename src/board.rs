@@ -21,12 +21,12 @@ impl Board {
         let mut squares = ['□'; 32];
 
         // black pieces
-        for i in 0..11 {
+        for i in 0..12 {
             squares[i] = 'b';
         }
 
         // red pieces
-        for i in 19..32 {
+        for i in 20..32 {
             squares[i] = 'r';
         }
 
