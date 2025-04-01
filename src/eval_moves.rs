@@ -180,4 +180,62 @@ impl MoveEvaluator {
 
         reg_moves
     }
+    // Parallel implementation to calculate all valid moves
+    pub fn par_possible_moves(&self) -> Vec<Move> {
+        // Start by checking for multi-captures (sequential due to recursive nature)
+        let mut mult_cap = Vec::new();
+
+        for i in 0..32 {
+            if !self.curr_piece(self.board.squares[i]) {
+                continue;
+            }
+
+            let mut visited = vec![i];
+            let mut current_path = vec![i];
+            let mut current_captures = Vec::new();
+
+            self.find_mult_cap(i, &mut visited, &mut current_path,
+                               &mut current_captures, &mut mult_cap);
+        }
+
+        if !mult_cap.is_empty() {
+            return mult_cap;
+        }
+
+        // If no multi-captures, check for single captures in parallel
+        let all_indices: Vec<usize> = (0..32).collect();
+
+        let all_captures: Vec<Move> = all_indices.par_iter()
+            .map(|&idx| self.cap_moves(idx))
+            .flatten()
+            .collect();
+
+        if !all_captures.is_empty() {
+            return all_captures;
+        }
+
+        // Only if no captures are available, generate regular moves in parallel
+        let all_regular_moves: Vec<Move> = all_indices.par_iter()
+            .map(|&idx| self.reg_moves(idx))
+            .flatten()
+            .collect();
+
+        all_regular_moves
+    }
+
+    // pub fn benchmark_performance(&self) -> (std::time::Duration, std::time::Duration) {
+    //     use std::time::Instant;
+    //
+    //     // Benchmark sequential implementation
+    //     let seq_start = Instant::now();
+    //     let _seq_moves = self.seq_possible_moves();
+    //     let seq_duration = seq_start.elapsed();
+    //
+    //     // Benchmark parallel implementation
+    //     let par_start = Instant::now();
+    //     let _par_moves = self.par_possible_moves();
+    //     let par_duration = par_start.elapsed();
+    //
+    //     (seq_duration, par_duration)
+    // }
 }
