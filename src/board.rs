@@ -1,5 +1,5 @@
 use crate::mv::Move;
-use std::iter;
+use crate::eval_moves::MoveEvaluator;
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
@@ -67,18 +67,35 @@ impl Board {
         (row, col)
     }
 
-    pub fn coords_to_index(&self, row: usize, col: usize) -> Option<usize> {
+    // In board.rs, replace the existing coords_to_index with this implementation
+
+    pub fn coords_to_index<T: TryInto<usize>>(&self, row: T, col: T) -> Option<usize>
+    where
+        <T as TryInto<usize>>::Error: std::fmt::Debug
+    {
+        // Try to convert to usize, returning None if conversion fails
+        // This will handle negative numbers or other invalid inputs
+        let r = match row.try_into() {
+            Ok(val) => val,
+            Err(_) => return None,
+        };
+
+        let c = match col.try_into() {
+            Ok(val) => val,
+            Err(_) => return None,
+        };
+
         // Use pattern matching for early returns
-        match (row, col) {
+        match (r, c) {
             (r, c) if r >= 8 || c >= 8 => None,
             (r, c) if (r + c) % 2 == 0 => None, // Light squares are not used
             _ => {
-                let index = if row % 2 == 0 {
+                let index = if r % 2 == 0 {
                     // Even row (0, 2, 4, 6) - valid squares are at odd columns
-                    (row / 2) * 8 + (col / 2)
+                    (r / 2) * 8 + (c / 2)
                 } else {
                     // Odd row (1, 3, 5, 7) - valid squares are at even columns
-                    (row / 2) * 8 + 4 + (col / 2)
+                    (r / 2) * 8 + 4 + (c / 2)
                 };
 
                 if index < 32 { Some(index) } else { None }
@@ -127,14 +144,14 @@ impl Board {
         }
     }
 
-    #[allow(dead_code)]
+    // Get all valid moves for the current player using the parallel implementation
     pub fn get_valid_moves(&self) -> Vec<Move> {
-        // This will be implemented in a separate file later
-        Vec::new()
+        let evaluator = MoveEvaluator::new(self.clone());
+        evaluator.par_possible_moves()
     }
 
     // Execute a move on the board
-    pub fn make_move(&mut self, m: &crate::mv::Move) -> Result<(), &'static str> {
+    pub fn make_move(&mut self, m: &Move) -> Result<(), &'static str> {
         // Get the piece from the source position
         let piece = self.squares[m.from];
 
