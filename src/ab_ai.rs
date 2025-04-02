@@ -50,8 +50,8 @@ pub fn bar(board: &Board) -> f32 {
                 else { -(row as f32) / 7.0 * 0.5 }
             },
             // Kings want to stay in the middle
-            'R' => 1.5 * (7.0 - row as f32) / 3.5,
-            'B' => -1.5 * (row as f32) / 3.5,
+            'R' => 1.5 * (1.0 - (3.5 - row as f32).abs() / 3.5),
+            'B' => -1.5 * (1.0 - (3.5 - row as f32).abs() / 3.5),
             _ => 0.0
         };
 
