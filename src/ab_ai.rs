@@ -3,35 +3,62 @@ use crate::board::{Board, Color};
 use crate::mv::Move;
 
 // Eval bar
-pub fn bar(board: &Board) -> f32 { // TODO: Simple eval bar with simple weights
+pub fn bar(board: &Board) -> f32 {
     let mut bar: f32 = 0.0;
 
+    // Iterate through all board squares
     for i in 0..32 {
         let piece = board.squares[i];
+
+        // Skip empty squares
         if piece == '□' {
             continue;
         }
 
-        let (row, _) = board.index_to_coords(i);
+        // Get the row and column for position weighting
+        let (row, col) = board.index_to_coords(i);
 
-        let row_weight = match piece {
-            'b' | 'R' => (row as f32 - 0.0) / 7.0,
-            'r' | 'B' => (7.0 - row as f32) / 7.0,
+        // Base piece values
+        let base_value = match piece {
+            'r' => 1.0,   // Red pawn
+            'R' => 2.5,   // Red king
+            'b' => -1.0,  // Black pawn
+            'B' => -2.5,  // Black king
             _ => 0.0
         };
 
-        match piece {
-            'r' => bar += 1.0 * row_weight  // Add positional value
-            ,'R' =>bar += 2.0+ 1.5 * row_weight
-            ,'b' => bar -= 1.0 * row_weight
-            ,'B' => bar -= 2.0+ 1.5 * row_weight
-            ,_ => {}
-        }
-    }
+        // Columns A/H are less valuable
+        let edge_penalty = if col == 0 || col == 7 {
+            match piece {
+                'r' | 'R' => -0.25,
+                'b' | 'B' => 0.25,
+                _ => 0.0
+            }
+        } else {
+            0.0
+        };
+
+        let row_bonus = match piece {
+
+            'r' => {
+                if row == 0 { 2.5 }
+                else { (7.0 - row as f32) / 7.0 * 1.5}
+            },
+
+            'b' => {
+                if row == 7{ -2.5 }
+                else { -(row as f32) / 7.0 * 1.5 }
+            },
+            // Kings want to stay in the middle
+            'R' => 1.5 * (7.0 - row as f32) / 3.5,
+            'B' => -1.5 * (row as f32) / 3.5,
+            _ => 0.0
+        };
+
+        bar += base_value + row_bonus + edge_penalty;    }
 
     (bar * 100.0).round() / 100.0
 }
-
 
 pub fn ab_ai(board: &Board, depth: u32) -> Option<Move> {
     let valid_moves = board.get_valid_moves();
