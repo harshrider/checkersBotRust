@@ -21,9 +21,9 @@ pub fn bar(board: &Board) -> f32 { // TODO: Simple eval bar with simple weights
 
         match piece {
             'r' => bar += 1.0 * row_weight  // Add positional value
-            ,'R' =>bar += 3.0 * row_weight
+            ,'R' =>bar += 1.5+ 1.5 * row_weight
             ,'b' => bar -= 1.0 * row_weight
-            ,'B' => bar -= 3.0 * row_weight
+            ,'B' => bar -= 1.5+ 1.5 * row_weight
             ,_ => {}
         }
     }
