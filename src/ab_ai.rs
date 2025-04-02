@@ -42,12 +42,12 @@ pub fn bar(board: &Board) -> f32 {
 
             'r' => {
                 if row == 0 { 2.5 }
-                else { (7.0 - row as f32) / 7.0 * 1.5}
+                else { (7.0 - row as f32) / 7.0 * 0.5}
             },
 
             'b' => {
                 if row == 7{ -2.5 }
-                else { -(row as f32) / 7.0 * 1.5 }
+                else { -(row as f32) / 7.0 * 0.5 }
             },
             // Kings want to stay in the middle
             'R' => 1.5 * (7.0 - row as f32) / 3.5,
